@@ -40,5 +40,4 @@ void mpu6050::loop() {
   GyroY_dps = (double)GyroY/131;
   GyroZ_dps = (double)GyroZ/131;
 
-
 }

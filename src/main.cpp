@@ -3,10 +3,13 @@
 #include <Wire.h>
 #include "mpu6050.h"
 
-#include  <WiFi.h>
-#include  <WiFiClient.h>
-#include  <WebServer.h>
-#include  <ESPmDNS.h>
+#include <imuDataProc.h>
+#include <dataBuffer.h>
+
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
 #include <Ps3Controller.h>
 
 #include "AsyncUDP.h"
@@ -17,30 +20,15 @@
 const char* ssid = "wifi";
 const char* password = "12345678";
 
-// servo setting
-const int servoChHead = 0;
-const int servoPinNum = 4;
-const int servoPin[] = {A15, A14, A16, A13}; //D12,D13,D14,D15
-int    servoFreq = 50; //Hz
-double servoCycle = 1000.0/servoFreq; 
-int    servoFactorBit = 16;
-double  servoZeroOffset = 11;
-double  pwm_m90deg = 65535.0 * 0.50 / servoCycle; //-90deg  servo sg90 
-double  pwm_0deg   = 65535.0 * 1.45 / servoCycle; //  0deg  servo sg90 
-double  pwm_90deg  = 65535.0 * 2.40 / servoCycle; //+90deg  servo sg90 
+//general
+const int CTRL_CYCLE=50;
 
-// driveMotor setting
-const int motorChHead = servoPinNum;
-const double motorDutyMax = 100.0;
-const int motorPinNum = 6;
-const int motorPin[] = {A12, A10, A4, A5, A19, A7}; //D2,4,D32,33,D26,27,
-int    motorFreq = 50; //Hz
-double motorCycle = 1000.0/servoFreq; 
-int    motorFactorBit = 16;
+//DAC
+const int DAC_PIN1 = 25;
+const int DAC_PIN2 = 26;
 
 // ps3 pad
 int ps3_battery = 0;
-
 int fow_input = 0;
 int st_input = 0;
 int fow_input2 = 0;
@@ -52,14 +40,13 @@ const int led = 4;
 
 AsyncUDP udp;
 
-
 mpu6050 imu;
+imuDataProc imuProc;
 
 
 void handleRoot() { //ブラウザのUI
   server.send(200, "text/html", index_html); 
 }
-
 
 void handleRC() { //ブラウザのUIを操作した結果のJSからアクセスされる
   for (int i = 0; i < server.args(); i++) {
@@ -75,7 +62,6 @@ void handleRC() { //ブラウザのUIを操作した結果のJSからアクセ�
   server.send(200, "text/plain", "\n\n\n");
 }
  
-
 void handleNotFound() {
   String message = "File Not Found\n\n";
   message += "URI: ";
@@ -94,6 +80,10 @@ void handleNotFound() {
 void setup_pin(){
 //  pinMode(led, OUTPUT);
 //  digitalWrite(led, LOW);
+
+}
+
+void setup_dac(){
 
 }
 
@@ -222,14 +212,13 @@ void ps3_onConnect(){
 
 void setup_ps3pad()
 {
-    Serial.begin(115200);
     setup_bt_mac_addres();
 
     Ps3.attach(ps3_notify);
     Ps3.attachOnConnect(ps3_onConnect);
     Ps3.begin("F0:08:D1:D8:29:FE");
-
     Serial.println("Ready.");
+
 }
 
 
@@ -261,23 +250,6 @@ void setup_wifi(){
  Serial.println("HTTP server started");
 
 
-}
-
-void setup_pwm(){
-}
-
-void setup_servo_pwm(){
-  for( int i=0; i<servoPinNum; i++ ){
-    ledcSetup( i, servoFreq, servoFactorBit);
-    ledcAttachPin(servoPin[i], i);
-  }
-}
-
-void setup_motor_pwm(){
-  for( int i=0; i<motorPinNum; i++ ){
-    ledcSetup( i + motorChHead, motorFreq, motorFactorBit);
-    ledcAttachPin(motorPin[i], i + motorChHead);
-  }  
 }
 
 void setup_UdpRecv(){
@@ -353,127 +325,46 @@ void setup_UdpRecv(){
 
 }
 
-int calcServoDeg2Pwm(  double inputDeg ){
-  double inputDegComp = 0;
-  // if( inputDeg < -90 ){
-  //   inputDeg = -90;
-  // }
-  // else if( inputDeg > 90 ){
-  //   inputDeg = 90;
-  // }
-
-  // オフセット=11で見た目 0deg
-  //-97＋オフセットで見た目-90deg
-  //+93＋オフセットで見た目+90deg
-  if( inputDeg > 0 ){
-    inputDegComp = inputDeg * 93 / 90;
-  }
-  if( inputDeg < 0 ){
-    inputDegComp = inputDeg * 97 / 90;
-  }
-
-  return ( inputDegComp + servoZeroOffset ) * ( pwm_90deg - pwm_m90deg ) / 180.0 + pwm_0deg;
-
-}
-
-int calcMotor2Pwm(  double inputFow ){ //入力=±100
-
-  return  (int)(inputFow * 65535.0 / 100.0);
-
-}
-
-
-
-void loop_pwm(){
-  static uint8_t brightness = 0;
-  brightness = ( fow_input + 100 )/2;
-  //ledcWrite(0, brightness);
-  
-  dacWrite( 25, max( abs(fow_input), abs(st_input) ) * 255 /100 );
-}
-
-void loop_servo_pwm(){   
-  double st_lpf_gain = 0.95; 
-  static double st_lpfed = 0;;
-  double st_lpfed0, st_lpfed1, st_lpfed2, st_lpfed3;
-
-  //st_lpfed = st_lpfed * st_lpf_gain + st_input * (1 - st_lpf_gain);
-  st_lpfed = st_lpfed * st_lpf_gain + (double)st_input * (1.0 - st_lpf_gain);
-
-  st_lpfed0 = st_lpfed;
-  st_lpfed1 = st_lpfed;
-  st_lpfed2 = st_lpfed0*-1;
-  st_lpfed3 = st_lpfed1*-1;
-
-  int inputPwm0 = calcServoDeg2Pwm( st_lpfed0 );
-  int inputPwm1 = calcServoDeg2Pwm( st_lpfed1 );
-  int inputPwm2 = calcServoDeg2Pwm( st_lpfed2 );
-  int inputPwm3 = calcServoDeg2Pwm( st_lpfed3 );
-
-
-  //Serial.print("inputPwm: ");
-  //Serial.println(inputPwm);
-  ledcWrite(0, inputPwm0 );
-  ledcWrite(1, inputPwm1 );
-  ledcWrite(2, inputPwm2 );
-  ledcWrite(3, inputPwm3 );
-
-}
-
-void loop_motor_pwm(){   
-  int inputPwm = calcMotor2Pwm(  abs( (double)( fow_input ) ) );
-  //Serial.print("inputPwm: ");
-  //Serial.println(inputPwm);
-  for( int i=0; i<motorPinNum; i=i+2 ){
-    if( fow_input >= 0 ){
-      ledcWrite( i + motorChHead     , inputPwm );
-      ledcWrite( i + motorChHead + 1 , 0 );
-      
-    }else{
-      ledcWrite( i + motorChHead     , 0 );
-      ledcWrite( i + motorChHead + 1 , inputPwm );
-    }
-  }
-  if( abs(inputPwm) > 1 ){
-
-      Serial.print("PWM: ");
-      Serial.println( inputPwm );
-  }
-
-
-}
 
 void setup(void) {
 
- Serial.begin(115200);
+  Serial.begin(115200);
 
- imu.setup();
+  imu.setup();
 
- setup_pin();
- setup_wifi();
- setup_UdpRecv();
- setup_servo_pwm();
- setup_motor_pwm();
- setup_ps3pad();
+  setup_pin();
+  setup_wifi();
+  setup_UdpRecv();
+  setup_ps3pad();
+
+  imuProc.setup( CTRL_CYCLE, 1000 );
 
 }
 
+
+void loop_dac( double motorCmd ){
+  dacWrite( DAC_PIN1, (int)(motorCmd * 255.0 / 100.0 ));
+  dacWrite( DAC_PIN2, (int)(motorCmd * 255.0 / 100.0 ));
+
+}
 
 void loop(void) {
  static unsigned long curr_prev=0;
  unsigned long curr = millis(); // 現在時刻を更新
 
- if( curr - curr_prev < 10 ){
+ if( curr - curr_prev < CTRL_CYCLE ){
     return;
  }
  curr_prev = curr;
  server.handleClient();
  
  imu.loop();
+ imuProc.loop( 0, imu.GyroX_dps, imu.GyroY_dps, imu.GyroZ_dps);
 
- loop_pwm();
- loop_servo_pwm();
- //loop_motor_pwm();
+ static int i=0;
+ //loop_dac( imuProc.gyro2motorCmd() );
+ loop_dac( 45 );
+
 }
 
 

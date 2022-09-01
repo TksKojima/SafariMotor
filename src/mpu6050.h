@@ -1,4 +1,9 @@
 
+// 使い方 setupとloopを呼び出して、以下の変数を呼ぶ
+// double AccX_g, AccY_g, AccZ_g;
+// double Temp_deg;
+// double GyroX_dps, GyroY_dps, GyroZ_dps;
+
 
 #include <Arduino.h>
 #include <Wire.h>
