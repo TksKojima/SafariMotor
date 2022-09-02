@@ -256,7 +256,7 @@ function pt_down(){\r\n\
   var timer = window.setInterval(() => { \r\n\
     vals = ''; \r\n\
     //if (nowDrag > 0) { \r\n\
-    vals = 'Fow=' + Fow + '&St=' + St ; \r\n\
+    vals = 'D0=' + Fow + '&D1=' + St ; \r\n\
     //} \r\n\
     HttpReq(vals); \r\n\
   }, 200); \r\n\
