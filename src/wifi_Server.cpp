@@ -78,6 +78,7 @@ void wifi_setup( int wifi_mode ){
   SPIFFS.begin();
   server.serveStatic("/favicon.ico", SPIFFS, "/favicon.ico");
   server.serveStatic("/Chart.min.js", SPIFFS, "/Chart.min.js");
+  server.serveStatic("/hoge", SPIFFS, "/Chart.min.jshogehoge");
   server.on("/", handleRoot);
   server.on("/rc", handleRC); 
   server.onNotFound(handleNotFound);
@@ -92,11 +93,11 @@ void wifi_setup( int wifi_mode ){
 }
 
 // データの更新
-void data_loop() {
+void wifi_data_loop( double temp ) {
   char payload[16];
 //=============================================
 // (4) センシング
-  float temp = 3;//htu21d.readTemperature();
+  //float temp = 0.3;//htu21d.readTemperature();
   snprintf_P(payload, sizeof(payload), SENSOR_JSON, temp);
 //============================================= 
 
@@ -107,8 +108,18 @@ void data_loop() {
 
 
 void wifi_loop(){
+  webSocket.loop();
   server.handleClient();
-  data_loop();
+  //data_loop();
+
+  // Serial.println("SPIFF ファイル表示");
+  // auto root = SPIFFS.open("/");
+  // auto file = root.openNextFile();
+  // while (file) {
+  //   Serial.println(file.name());
+  //   file = root.openNextFile();
+  // }
+
 
 }
 

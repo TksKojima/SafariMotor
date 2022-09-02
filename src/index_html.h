@@ -45,8 +45,15 @@ ws.onmessage = function(evt) {
   console.log(Time);
   console.log(data_x1);
 
-  chart.data.labels.push(Time);
-  chart.data.datasets[0].data.push(data_x1);
+  if( chart.data.labels.push(Time) > 100 ){
+    chart.data.labels.shift();
+  }
+  if( chart.data.datasets[0].data.push(data_x1) > 100 ){
+    chart.data.datasets[0].data.shift();
+  }
+
+
+
   chart.update();
 };
 ws.onclose = function(evt) {

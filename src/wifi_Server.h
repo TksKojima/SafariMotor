@@ -14,8 +14,6 @@
 #include  "defhtml.h"
 
 
-
-
 void wifi_setup( int wifi_mode );
 void wifi_loop();
 
@@ -24,7 +22,7 @@ void handleRC();
 void handleNotFound();
 void handlePlot();
 
-void data_loop();
+void wifi_data_loop( double data );
 
 #endif
 

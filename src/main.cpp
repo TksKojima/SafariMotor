@@ -72,6 +72,7 @@ void loop(void) {
   loop_dac( imuProc.gyro2motorCmd() );
 
   wifi_loop();
+  wifi_data_loop( imuProc.gyroVal );
 
 }
 
