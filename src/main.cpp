@@ -38,8 +38,8 @@ void setup(void) {
   Serial.begin(115200);
 
   imu.setup();
-//  wifi_setup( WIFI_AP );
-  wifi_setup( WIFI_STA );
+  wifi_setup( WIFI_AP );
+//  wifi_setup( WIFI_STA );
   
   udpRx_setup( udpRx_port, udpRx_dataNum );
 

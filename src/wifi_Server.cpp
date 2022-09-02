@@ -13,7 +13,6 @@ WebSocketsServer webSocket = WebSocketsServer(81); // 81番ポート
 const char* ssid_ap = "wifi";
 const char* password_ap = "12345678";
 
-
 const char* ssid_sta = "MYASUS";
 const char* password_sta = "12345678";
 
@@ -22,6 +21,9 @@ const char* password_sta = "12345678";
 const IPAddress ip(192, 168, 201, 157);
 const IPAddress gateway(192, 168, 201, 157); //gatewayのIPアドレス
 const IPAddress subnet(255,255,255,0);
+
+// センサのデータ(JSON形式)
+const char SENSOR_JSON[] PROGMEM = R"=====({"val1":%.1f})=====";
 
 
 void wifi_setup( int wifi_mode ){
@@ -69,27 +71,52 @@ void wifi_setup( int wifi_mode ){
   if (MDNS.begin("esp32led")) {
     Serial.println("MDNS responder started");
   }
+
+
+  // Webサーバーのコンテンツ設定
+  // favicon.ico, Chart.min.jsは dataフォルダ内に配置
+  SPIFFS.begin();
+  server.serveStatic("/favicon.ico", SPIFFS, "/favicon.ico");
+  server.serveStatic("/Chart.min.js", SPIFFS, "/Chart.min.js");
   server.on("/", handleRoot);
   server.on("/rc", handleRC); 
-  server.on("/inline", []() {
-  server.send(200, "text/plain", "hello from esp8266!");
-  });
+  server.onNotFound(handleNotFound);
+  server.on("/plot", handlePlot);
   server.onNotFound(handleNotFound);
   server.begin();
   Serial.println("HTTP server started");
 
+  // WebSocketサーバー開始
+  webSocket.begin();
+
+}
+
+// データの更新
+void data_loop() {
+  char payload[16];
+//=============================================
+// (4) センシング
+  float temp = 3;//htu21d.readTemperature();
+  snprintf_P(payload, sizeof(payload), SENSOR_JSON, temp);
+//============================================= 
+
+  // WebSocketでデータ送信(全端末へブロードキャスト)
+  webSocket.broadcastTXT(payload, strlen(payload));
+//  Serial.println(payload);
 }
 
 
 void wifi_loop(){
   server.handleClient();
+  data_loop();
+
 }
 
 
 // Webコンテンツのイベントハンドラ
 void handlePlot() {
   String s = INDEX_HTML; // index_html.hより読み込み
-  webServer.send(200, "text/html", s);
+  server.send(200, "text/html", s);
 }
 
 void handleRoot() { //ブラウザのUI
