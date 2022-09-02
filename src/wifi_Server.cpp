@@ -13,17 +13,22 @@ WebSocketsServer webSocket = WebSocketsServer(81); // 81番ポート
 const char* ssid_ap = "wifi";
 const char* password_ap = "12345678";
 
-const char* ssid_sta = "MYASUS";
-const char* password_sta = "12345678";
+// const char* ssid_sta = "MYASUS";
+// const char* password_sta = "12345678";
 
-// const IPAddress ip(192, 168, 4, 1);
-// const IPAddress gateway(192, 168, 4, 1); //gatewayのIPアドレス
-const IPAddress ip(192, 168, 201, 157);
-const IPAddress gateway(192, 168, 201, 157); //gatewayのIPアドレス
+const char* ssid_sta = "TP-Link_25B0";
+const char* password_sta = "95230184";
+
+
+const IPAddress ip(192, 168, 0, 55);
+const IPAddress gateway(192, 168, 0, 55); //gatewayのIPアドレス
+// const IPAddress ip(192, 168, 201, 157);
+// const IPAddress gateway(192, 168, 201, 157); //gatewayのIPアドレス
 const IPAddress subnet(255,255,255,0);
 
 // センサのデータ(JSON形式)
-const char SENSOR_JSON[] PROGMEM = R"=====({"val1":%.1f})=====";
+//const char SENSOR_JSON[] PROGMEM = R"=====({"val1":%.1f})=====";
+const char SENSOR_JSON[] PROGMEM = R"=====({"val0":%.1f, "val1":%.1f, "val2":%.1f})=====";
 
 
 void wifi_setup( int wifi_mode ){
@@ -93,12 +98,12 @@ void wifi_setup( int wifi_mode ){
 }
 
 // データの更新
-void wifi_data_loop( double temp ) {
-  char payload[16];
+void wifi_data_loop( double data0, double data1, double data2 ) {
+  char payload[40];
 //=============================================
 // (4) センシング
   //float temp = 0.3;//htu21d.readTemperature();
-  snprintf_P(payload, sizeof(payload), SENSOR_JSON, temp);
+  snprintf_P(payload, sizeof(payload), SENSOR_JSON, data0, data1, data2 );
 //============================================= 
 
   // WebSocketでデータ送信(全端末へブロードキャスト)

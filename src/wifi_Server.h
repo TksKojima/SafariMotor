@@ -22,7 +22,7 @@ void handleRC();
 void handleNotFound();
 void handlePlot();
 
-void wifi_data_loop( double data );
+void wifi_data_loop( double data0, double data1, double data2);
 
 #endif
 
