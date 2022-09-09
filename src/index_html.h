@@ -64,6 +64,9 @@ ws.onmessage = function(evt) {
   var data_x0 = JSON.parse(evt.data)["val0"];
   var data_x1 = JSON.parse(evt.data)["val1"];
   var data_x2 = JSON.parse(evt.data)["val2"];
+  var mode = JSON.parse(evt.data)["mode"];
+
+  console.log(evt.data);
 
   console.log(Time);
   console.log(data_x0);
@@ -82,6 +85,36 @@ ws.onmessage = function(evt) {
   if( chart.data.datasets[2].data.push(data_x2) > 100 ){
     chart.data.datasets[2].data.shift();
   }
+
+  
+  var label_x0 = "000";
+  var label_x1 = "111";
+  var label_x2 = "222";
+
+  if( mode == 0){
+    label_x0 = "gyroX";
+    label_x1 = "gyroY";
+    label_x2 = "gyroZ";
+  }
+  if( mode == 3){
+    label_x0 = "gyroVal";
+    label_x1 = "motorCmd";
+    label_x2 = "aveGain_x100";
+  }  
+  if( mode == 2){
+    label_x0 = "minmaxX";
+    label_x1 = "minmaxY";
+    label_x2 = "minmaxZ";
+  }  
+  if( mode == 1){
+    label_x0 = "gyroAveX";
+    label_x1 = "gyroAveY";
+    label_x2 = "gyroAveZ";
+  }  
+
+  chart.data.datasets[0].label = label_x0;
+  chart.data.datasets[1].label = label_x1;
+  chart.data.datasets[2].label = label_x2;
 
 
 

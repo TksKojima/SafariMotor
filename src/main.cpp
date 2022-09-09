@@ -73,7 +73,15 @@ void loop(void) {
 
   wifi_loop();
   //wifi_data_loop( imuProc.gyroVal );
-  wifi_data_loop( imu.GyroX_dps, imu.GyroY_dps, imu.GyroZ_dps );
+
+
+
+  if(      plotMode == 0 ) wifi_data_loop( imu.GyroX_dps, imu.GyroY_dps, imu.GyroZ_dps );
+  else if( plotMode == 1 ) wifi_data_loop( imuProc.bufGyroOffsetedX.getSampleAverage(), imuProc.bufGyroOffsetedY.getSampleAverage(), imuProc.bufGyroOffsetedZ.getSampleAverage() );
+  else if( plotMode == 2 ) wifi_data_loop( imuProc.bufGyroOffsetedX.getSampleMinMaxDif(), imuProc.bufGyroOffsetedY.getSampleMinMaxDif(), imuProc.bufGyroOffsetedZ.getSampleMinMaxDif() );
+  else if( plotMode == 3 ) wifi_data_loop( imuProc.gyroVal, imuProc.motorCmd, imuProc.gyroAveGain*100 );
+
+
 
 }
 

@@ -1,10 +1,15 @@
 #include "wifi_Server.h"
 
+//SPIFFSアップロード
+//C:\Users\user\.platformio\penv\Scripts\platformio.exe run --target uploadfs 
+
 // input 
 int dat0_input = 0;
 int dat1_input = 0;
 int dat2_input = 0;
 int dat3_input = 0;
+
+int plotMode = 0;
 
 WebServer server(80);
 // Websocketサーバー IPアドレス:81
@@ -13,11 +18,8 @@ WebSocketsServer webSocket = WebSocketsServer(81); // 81番ポート
 const char* ssid_ap = "wifi";
 const char* password_ap = "12345678";
 
-// const char* ssid_sta = "MYASUS";
-// const char* password_sta = "12345678";
-
-const char* ssid_sta = "TP-Link_25B0";
-const char* password_sta = "95230184";
+const char* ssid_sta = "MYASUS";
+const char* password_sta = "12345678";
 
 
 const IPAddress ip(192, 168, 0, 55);
@@ -28,7 +30,8 @@ const IPAddress subnet(255,255,255,0);
 
 // センサのデータ(JSON形式)
 //const char SENSOR_JSON[] PROGMEM = R"=====({"val1":%.1f})=====";
-const char SENSOR_JSON[] PROGMEM = R"=====({"val0":%.1f, "val1":%.1f, "val2":%.1f})=====";
+//const char SENSOR_JSON[] PROGMEM = R"=====({"val0":%.1f, "val1":%.1f, "val2":%.1f, "str0":"%s", "str1":"%s", "str2":"%s"})=====";
+const char SENSOR_JSON[] PROGMEM = R"=====({"val0":%.1f, "val1":%.1f, "val2":%.1f, "mode":%d})=====";
 
 
 void wifi_setup( int wifi_mode ){
@@ -62,7 +65,6 @@ void wifi_setup( int wifi_mode ){
     WiFi.mode(WIFI_AP);
     WiFi.softAP(ssid_ap, password_ap, 3, 0, 4);
     delay(200);
-    //WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
     WiFi.softAPConfig( ip,gateway,subnet );
     Serial.println("");
     Serial.print("AP IP address: ");
@@ -88,6 +90,12 @@ void wifi_setup( int wifi_mode ){
   server.on("/rc", handleRC); 
   server.onNotFound(handleNotFound);
   server.on("/plot", handlePlot);
+  server.on("/plot0", handlePlot0);
+  server.on("/plot1", handlePlot1);
+  server.on("/plot2", handlePlot2);
+  server.on("/plot3", handlePlot3);
+  server.on("/plot4", handlePlot4);
+
   server.onNotFound(handleNotFound);
   server.begin();
   Serial.println("HTTP server started");
@@ -99,11 +107,13 @@ void wifi_setup( int wifi_mode ){
 
 // データの更新
 void wifi_data_loop( double data0, double data1, double data2 ) {
-  char payload[40];
+  char payload[80];
 //=============================================
-// (4) センシング
-  //float temp = 0.3;//htu21d.readTemperature();
-  snprintf_P(payload, sizeof(payload), SENSOR_JSON, data0, data1, data2 );
+  std::string label0;
+  std::string label1;
+  std::string label2;
+
+  snprintf_P(payload, sizeof(payload), SENSOR_JSON, data0, data1, data2, plotMode);
 //============================================= 
 
   // WebSocketでデータ送信(全端末へブロードキャスト)
@@ -135,11 +145,37 @@ void handlePlot() {
   server.send(200, "text/html", s);
 }
 
+void handlePlot0() {
+  plotMode = 0;
+  handlePlot();
+}
+void handlePlot1() {
+  plotMode = 1;
+  handlePlot();
+  
+}
+void handlePlot2() {
+  plotMode = 2;
+  handlePlot();
+  
+}
+void handlePlot3() {
+  plotMode = 3;
+  handlePlot();
+  
+}
+void handlePlot4() {
+  plotMode = 4;
+  handlePlot();
+  
+}
+
+
 void handleRoot() { //ブラウザのUI
   server.send(200, "text/html", index_html); 
 }
 
-void handleRC() { //ブラウザのUIを操作した結果のJSからアクセスされ??
+void handleRC() { //ブラウザのUIを操作した結果のJSからアクセスされる
   for (int i = 0; i < server.args(); i++) {
     int Val_i = server.arg(i).toInt();
     Serial.print(server.argName(i) + "=" + server.arg(i) + ", ");

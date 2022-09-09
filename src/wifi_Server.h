@@ -13,6 +13,8 @@
 
 #include  "defhtml.h"
 
+extern int plotMode;
+
 
 void wifi_setup( int wifi_mode );
 void wifi_loop();
@@ -21,6 +23,11 @@ void handleRoot();
 void handleRC();
 void handleNotFound();
 void handlePlot();
+void handlePlot0();
+void handlePlot1();
+void handlePlot2();
+void handlePlot3();
+void handlePlot4();
 
 void wifi_data_loop( double data0, double data1, double data2);
 
