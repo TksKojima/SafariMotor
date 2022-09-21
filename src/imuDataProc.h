@@ -41,6 +41,7 @@ typedef struct imuDataProc
     double gyroValThresh100; // ƒ‚[ƒ^100“‚Ìè‡’l
     double gyroAveThresh; 
     double motorCmd;
+    double motorCmdMaxVal;
 
     double gyro2motorCmd();
 

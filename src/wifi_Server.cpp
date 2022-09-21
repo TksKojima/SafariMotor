@@ -18,15 +18,27 @@ WebSocketsServer webSocket = WebSocketsServer(81); // 81番ポート
 const char* ssid_ap = "wifi";
 const char* password_ap = "12345678";
 
-const char* ssid_sta = "MYASUS";
-const char* password_sta = "12345678";
+// const char* ssid_sta = "MYASUS";
+// const char* password_sta = "12345678";
+
+const char* ssid_sta = "safari_wifi";
+const char* password_sta = "87654321";
 
 
-const IPAddress ip(192, 168, 0, 55);
-const IPAddress gateway(192, 168, 0, 55); //gatewayのIPアドレス
-// const IPAddress ip(192, 168, 201, 157);
-// const IPAddress gateway(192, 168, 201, 157); //gatewayのIPアドレス
+// AP mode
+// const IPAddress ip(192, 168, 0, 55);
+// const IPAddress gateway(192, 168, 0, 55); //gatewayのIPアドレス
+
+// MYASUS
+// const IPAddress ip(192, 168, 43, 149);
+// const IPAddress gateway(192, 168, 43, 149); //gatewayのIPアドレス
+// const IPAddress subnet(255,255,255,0);
+
+// Kojima Rooter
+const IPAddress ip(192, 168, 10, 108);
+const IPAddress gateway(192, 168, 10, 108); //gatewayのIPアドレス
 const IPAddress subnet(255,255,255,0);
+
 
 // センサのデータ(JSON形式)
 //const char SENSOR_JSON[] PROGMEM = R"=====({"val1":%.1f})=====";
@@ -63,7 +75,7 @@ void wifi_setup( int wifi_mode ){
   }
   else if( wifi_mode == WIFI_AP ){
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(ssid_ap, password_ap, 3, 0, 4);
+    WiFi.softAP(ssid_ap, password_ap, 3, 0, 6);
     delay(200);
     WiFi.softAPConfig( ip,gateway,subnet );
     Serial.println("");

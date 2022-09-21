@@ -5,6 +5,13 @@
 //　制御周期と、平均等のサンプリング時間(1秒=1000を想定)
 void imuDataProc::setup( int _CtrlCycle, int _sampleMilliSec ){
 
+    //モータ指令値計算用 角速度の閾値
+    gyroValThresh50  = 30; // モータ指令値を50%にするときの角速度の閾値
+    gyroValThresh100 = gyroValThresh50 * 1.5; //100%
+
+    motorCmdMaxVal = 50;
+
+
     ctrlCycle = _CtrlCycle;
     sampleMilliSec = _sampleMilliSec;
 
@@ -19,9 +26,6 @@ void imuDataProc::setup( int _CtrlCycle, int _sampleMilliSec ){
     bufGyroOffsetedY.init( sampleNum );
     bufGyroOffsetedZ.init( sampleNum );
 
-    //モータ指令値計算用 角速度の閾値
-    gyroValThresh50  = 50; // モータ指令値を50%にするときの角速度の閾値
-    gyroValThresh100 = gyroValThresh50 * 1.5; //100%
 
     // 平均値が大きいときに指令値を小さくする閾値
     gyroAveThresh = 5;  // この値からゲインを小さくし始めて、この値+1でゲイン0
@@ -98,7 +102,7 @@ double imuDataProc::gyro2motorCmd(){
         motorCmd0 = 50 * ( gyroVal -gyroValThresh50 ) / ( gyroValThresh100 -gyroValThresh50 ) + 50;
     }
 
-    motorCmd = motorCmd0 * gyroAveGain;
+    motorCmd = motorCmd0 * gyroAveGain * motorCmdMaxVal / 100 ;
 
 
     return motorCmd;
@@ -123,6 +127,14 @@ void imuDataProc::loop( double speed, double gyroX, double gyroY, double gyroZ )
         Serial.print( gyroAve );
         Serial.print(", gyroAveGain: "); 
         Serial.print( gyroAveGain );
+
+        Serial.print(", x: "); 
+        Serial.print( bufGyroX.getSampleAverage() );
+        Serial.print(", y: "); 
+        Serial.print( bufGyroY.getSampleAverage() );
+        Serial.print(", z: "); 
+        Serial.print( bufGyroZ.getSampleAverage() );
+
 
         Serial.print(", xoft: "); 
         Serial.print( bufGyroOffsetedX.getSampleAverage() );

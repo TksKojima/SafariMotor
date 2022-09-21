@@ -26,7 +26,7 @@ const int DAC_PIN2 = 26;
 
 //UDP Rx
 const int udpRx_port   = 10001; //UDP受信ポート
-const int udpRx_dataNum = 4; //UDPで受信する変数数(全部同じ型(バイト数)の変数前提)
+const int udpRx_dataNum = 3; //UDPで受信する変数数(全部同じ型(バイト数)の変数前提)
 
 
 mpu6050 imu;
@@ -50,9 +50,12 @@ void setup(void) {
 }
 
 
-void loop_dac( double motorCmd ){
+void loop_dac( double motorCmd, double motorCmdMax ){
+  // dacWrite( DAC_PIN1, (int)(motorCmd * 255.0 / 100.0 ));
+  // dacWrite( DAC_PIN2, (int)(motorCmd * 255.0 / 100.0 ));
+
   dacWrite( DAC_PIN1, (int)(motorCmd * 255.0 / 100.0 ));
-  dacWrite( DAC_PIN2, (int)(motorCmd * 255.0 / 100.0 ));
+  dacWrite( DAC_PIN2, (int)(motorCmd * 255.0 / motorCmdMax)); // LED用
 
 }
 
@@ -66,17 +69,16 @@ void loop(void) {
   curr_prev = curr;
 
   imu.loop();
-  imuProc.loop( 0, imu.GyroX_dps, imu.GyroY_dps, imu.GyroZ_dps);
-  //imuProc.loop( udpRx_getData(0), udpRx_getData(1), udpRx_getData(2), udpRx_getData(3) );
+  //imuProc.loop( 0, imu.GyroX_dps, imu.GyroY_dps, imu.GyroZ_dps);
+  imuProc.loop( 0, udpRx_getData(0), udpRx_getData(1), udpRx_getData(2) );
 
-  loop_dac( imuProc.gyro2motorCmd() );
+  loop_dac( imuProc.gyro2motorCmd(), imuProc.motorCmdMaxVal );
 
   wifi_loop();
-  //wifi_data_loop( imuProc.gyroVal );
 
 
-
-  if(      plotMode == 0 ) wifi_data_loop( imu.GyroX_dps, imu.GyroY_dps, imu.GyroZ_dps );
+  //if(      plotMode == 0 ) wifi_data_loop( imu.GyroX_dps, imu.GyroY_dps, imu.GyroZ_dps );
+  if(      plotMode == 0 ) wifi_data_loop( udpRx_getData(0), udpRx_getData(1), udpRx_getData(2) );
   else if( plotMode == 1 ) wifi_data_loop( imuProc.bufGyroOffsetedX.getSampleAverage(), imuProc.bufGyroOffsetedY.getSampleAverage(), imuProc.bufGyroOffsetedZ.getSampleAverage() );
   else if( plotMode == 2 ) wifi_data_loop( imuProc.bufGyroOffsetedX.getSampleMinMaxDif(), imuProc.bufGyroOffsetedY.getSampleMinMaxDif(), imuProc.bufGyroOffsetedZ.getSampleMinMaxDif() );
   else if( plotMode == 3 ) wifi_data_loop( imuProc.gyroVal, imuProc.motorCmd, imuProc.gyroAveGain*100 );
