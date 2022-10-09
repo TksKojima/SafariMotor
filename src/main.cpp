@@ -15,6 +15,7 @@
 
 #include "wifi_Server.h"
 
+#include "touchSens.h"
  
 
 //general
@@ -24,6 +25,10 @@ const int CTRL_CYCLE=50; //§ŒäüŠú
 const int DAC_PIN1 = 25; //“dˆ³o—Íƒsƒ“
 const int DAC_PIN2 = 26;
 
+//Touch
+const int TOUCH_PIN = 15; //
+
+
 //UDP Rx
 const int udpRx_port   = 10001; //UDPóMƒ|[ƒg
 const int udpRx_dataNum = 3; //UDP‚ÅóM‚·‚é•Ï””(‘S•”“¯‚¶Œ^(ƒoƒCƒg”)‚Ì•Ï”‘O’ñ)
@@ -31,7 +36,7 @@ const int udpRx_dataNum = 3; //UDP‚ÅóM‚·‚é•Ï””(‘S•”“¯‚¶Œ^(ƒoƒCƒg”)‚Ì•Ï”‘O’
 
 mpu6050 imu;
 imuDataProc imuProc;
-
+touchSens touch;
 
 void setup(void) {
 
@@ -39,13 +44,14 @@ void setup(void) {
 
   imu.setup();
   //wifi_setup( WIFI_AP );
+  
   wifi_setup( WIFI_STA );
   
   udpRx_setup( udpRx_port, udpRx_dataNum );
-
   ps3_setup();
-
   imuProc.setup( CTRL_CYCLE, 1000 );
+
+  touch.setup( TOUCH_PIN );
 
 }
 
@@ -72,17 +78,24 @@ void loop(void) {
   //imuProc.loop( 0, imu.GyroX_dps, imu.GyroY_dps, imu.GyroZ_dps);
   imuProc.loop( 0, udpRx_getData(0), udpRx_getData(1), udpRx_getData(2) );
 
-  loop_dac( imuProc.gyro2motorCmd(), imuProc.motorCmdMaxVal );
+
+  double motorCmd = 0;
+
+  if( touch.getTouch() == 1){
+    motorCmd = imuProc.motorCmdMaxVal;
+  }else{
+    motorCmd = imuProc.gyro2motorCmd();
+  }
+
+  loop_dac( motorCmd, imuProc.motorCmdMaxVal );
 
   wifi_loop();
-
 
   //if(      plotMode == 0 ) wifi_data_loop( imu.GyroX_dps, imu.GyroY_dps, imu.GyroZ_dps );
   if(      plotMode == 0 ) wifi_data_loop( udpRx_getData(0), udpRx_getData(1), udpRx_getData(2) );
   else if( plotMode == 1 ) wifi_data_loop( imuProc.bufGyroOffsetedX.getSampleAverage(), imuProc.bufGyroOffsetedY.getSampleAverage(), imuProc.bufGyroOffsetedZ.getSampleAverage() );
   else if( plotMode == 2 ) wifi_data_loop( imuProc.bufGyroOffsetedX.getSampleMinMaxDif(), imuProc.bufGyroOffsetedY.getSampleMinMaxDif(), imuProc.bufGyroOffsetedZ.getSampleMinMaxDif() );
   else if( plotMode == 3 ) wifi_data_loop( imuProc.gyroVal, imuProc.motorCmd, imuProc.gyroAveGain*100 );
-
 
 
 }
