@@ -14,6 +14,8 @@
 #include  "defhtml.h"
 
 extern int plotMode;
+extern int dat0_input;
+extern int dat1_input;
 
 
 void wifi_setup( int wifi_mode );
@@ -22,6 +24,7 @@ void wifi_loop();
 void handleRoot();
 void handleRC();
 void handleNotFound();
+void handleInputPad();
 void handlePlot();
 void handlePlot0();
 void handlePlot1();

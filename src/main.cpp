@@ -43,15 +43,16 @@ void setup(void) {
   Serial.begin(115200);
 
   imu.setup();
-  //wifi_setup( WIFI_AP );
   
-  wifi_setup( WIFI_STA );
-  
-  udpRx_setup( udpRx_port, udpRx_dataNum );
   ps3_setup();
   imuProc.setup( CTRL_CYCLE, 1000 );
 
   touch.setup( TOUCH_PIN );
+
+  //wifi_setup( WIFI_AP );  //自分がWifi発信
+  wifi_setup( WIFI_STA );  //ルータ等がWifi発信
+
+  udpRx_setup( udpRx_port, udpRx_dataNum );
 
 }
 
@@ -75,8 +76,9 @@ void loop(void) {
   curr_prev = curr;
 
   imu.loop();
-  //imuProc.loop( 0, imu.GyroX_dps, imu.GyroY_dps, imu.GyroZ_dps);
-  imuProc.loop( 0, udpRx_getData(0), udpRx_getData(1), udpRx_getData(2) );
+
+  //imuProc.loop( 0, imu.GyroX_dps, imu.GyroY_dps, imu.GyroZ_dps); //自分のジャイロ
+  imuProc.loop( 0, udpRx_getData(0), udpRx_getData(1), udpRx_getData(2) );  //ラジコンからのジャイロ
 
 
   double motorCmd = 0;
@@ -96,6 +98,12 @@ void loop(void) {
   else if( plotMode == 1 ) wifi_data_loop( imuProc.bufGyroOffsetedX.getSampleAverage(), imuProc.bufGyroOffsetedY.getSampleAverage(), imuProc.bufGyroOffsetedZ.getSampleAverage() );
   else if( plotMode == 2 ) wifi_data_loop( imuProc.bufGyroOffsetedX.getSampleMinMaxDif(), imuProc.bufGyroOffsetedY.getSampleMinMaxDif(), imuProc.bufGyroOffsetedZ.getSampleMinMaxDif() );
   else if( plotMode == 3 ) wifi_data_loop( imuProc.gyroVal, imuProc.motorCmd, imuProc.gyroAveGain*100 );
+  else if( plotMode == 4 ) wifi_data_loop( imuProc.gyroVal, imuProc.motorCmd, imuProc.gyroValThresh50 );
+
+  if( dat0_input != 0 ){
+    imuProc.reloadThresh( imuProc.gyroValThresh50 + dat0_input );
+    dat0_input = 0;
+  }
 
 
 }

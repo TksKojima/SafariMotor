@@ -27,6 +27,7 @@ typedef struct imuDataProc
     void loop( double speed, double gyroX, double gyroY, double gyroZ );
     void setBuf( double speed, double gyroX, double gyroY, double gyroZ );
     void getGyroOffset();
+    void reloadThresh( double newThresh50 );
 
     /// モータコマンド用
     double gyroVal;

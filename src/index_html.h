@@ -10,6 +10,12 @@ const char INDEX_HTML[] PROGMEM = R"=====(
   <canvas id="myChart" width="600" height="400"></canvas>
 </div>
 <br><br>
+<a href="/plot0">plot0:UDPdata</a>  <a href="/plot1">plot1:GyroAverage</a>  <a href="/plot2">plot2:GyroMinMax</a>
+<a href="/plot3">plot3:MotorCmd</a>  <a href="/plot4">plot4:MotorCmd&Thresh</a>  
+<br><br>
+<input id="Button1" type="button" value=" Thresh -5" onclick="OnButtonClick(-5);" />
+<input id="Button1" type="button" value=" Thresh +5" onclick="OnButtonClick(5);"/>
+
 <script src = "/Chart.min.js"></script>  
 <script>
 var graphData = {
@@ -101,6 +107,11 @@ ws.onmessage = function(evt) {
     label_x1 = "motorCmd";
     label_x2 = "aveGain_x100";
   }  
+  if( mode == 4){
+    label_x0 = "gyroVal";
+    label_x1 = "motorCmd";
+    label_x2 = "gyroValThresh";
+  }  
   if( mode == 2){
     label_x0 = "minmaxX";
     label_x1 = "minmaxY";
@@ -127,6 +138,25 @@ ws.onclose = function(evt) {
 ws.onerror = function(evt) {
   console.log(evt);
 }
+
+
+var xhr = new XMLHttpRequest(), reqSend = 0, reqRet = 0; 
+xhr.onreadystatechange = HttpRes; 
+function HttpRes()  { 
+  if (xhr.readyState == 4 && xhr.status == 200) reqRet = 1; 
+} 
+
+function HttpReq(v) { 
+  xhr.open('GET', '/rc?' + v); 
+  xhr.send(null); 
+  reqRet = 0; 
+}
+
+function OnButtonClick( addval ) {
+  HttpReq('D0=' + addval);
+}
+
+
 </script>
 </body></html>
 )=====";

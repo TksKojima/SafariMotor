@@ -29,10 +29,10 @@ void imuDataProc::setup( int _CtrlCycle, int _sampleMilliSec ){
 
     // 平均値が大きいときに指令値を小さくする閾値
     gyroAveThresh = 5;  // この値からゲインを小さくし始めて、この値+1でゲイン0
-
-
     
 }
+
+
 
 // バッファを更新する loopから呼び出す
 void imuDataProc::setBuf( double speed, double gyroX, double gyroY, double gyroZ ){
@@ -108,6 +108,15 @@ double imuDataProc::gyro2motorCmd(){
     return motorCmd;
 
 }
+
+void  imuDataProc::reloadThresh( double newThresh50 ){
+    gyroValThresh50  = newThresh50; // モータ指令値を50%にするときの角速度の閾値
+    if( gyroValThresh50 < 0 ){ gyroValThresh50 = 1; }
+
+    gyroValThresh100 = gyroValThresh50 * 1.5; //100%
+
+}
+
 
 
 // loopで呼び出す

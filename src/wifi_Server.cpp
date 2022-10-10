@@ -101,6 +101,7 @@ void wifi_setup( int wifi_mode ){
   server.on("/", handleRoot);
   server.on("/rc", handleRC); 
   server.onNotFound(handleNotFound);
+  server.on("/inputPad", handleInputPad);
   server.on("/plot", handlePlot);
   server.on("/plot0", handlePlot0);
   server.on("/plot1", handlePlot1);
@@ -184,7 +185,12 @@ void handlePlot4() {
 
 
 void handleRoot() { //ブラウザのUI
-  server.send(200, "text/html", index_html); 
+  handlePlot4();
+
+}
+
+void handleInputPad() { //ブラウザのUI
+  server.send(200, "text/html", inputPad_html); 
 }
 
 void handleRC() { //ブラウザのUIを操作した結果のJSからアクセスされる
@@ -192,10 +198,9 @@ void handleRC() { //ブラウザのUIを操作した結果のJSからアクセスされる
     int Val_i = server.arg(i).toInt();
     Serial.print(server.argName(i) + "=" + server.arg(i) + ", ");
     
-    switch (server.argName(i)[0]) {
-      case 'A': dat0_input = Val_i; break;
-      case 'B': dat1_input = Val_i; break;
-    }
+    if(      server.argName(i) == "D0" ) { dat0_input = Val_i; }
+    else if( server.argName(i) == "D1" ) { dat1_input = Val_i; }
+
   }
   Serial.println();
   server.send(200, "text/plain", "\n\n\n");
